@@ -162,7 +162,7 @@
 <body>
 
 <h1>Image Cropper</h1>
-<p class="subtitle">画像を中心から500x500pxにトリミング / 最大1000枚同時処理</p>
+<p class="subtitle">画像を中心から短辺基準の正方形にトリミング / 最大1000枚同時処理</p>
 <p style="margin-bottom:20px"><a href="guide.html" style="color:#6c63ff;font-size:14px;text-decoration:none;border:1px solid #6c63ff;padding:6px 16px;border-radius:6px;">使い方ガイド</a></p>
 
 <div class="drop-zone" id="dropZone">
@@ -185,7 +185,7 @@
 <div class="section-title" id="originalTitle" style="display:none">元画像</div>
 <div class="gallery" id="originalGallery"></div>
 
-<div class="section-title" id="croppedTitle" style="display:none">トリミング済み (500x500)</div>
+<div class="section-title" id="croppedTitle" style="display:none">トリミング済み（短辺正方形）</div>
 <div class="gallery" id="croppedGallery"></div>
 
 <script>
@@ -205,7 +205,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 </script>
 <script>
 const MAX_FILES = 1000;
-const CROP_SIZE = 500;
+// CROP_SIZE is now determined per image (shorter side)
 
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
@@ -382,22 +382,16 @@ function cropImage(file) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
+      const cropSize = Math.min(img.width, img.height);
       const canvas = document.createElement('canvas');
-      canvas.width = CROP_SIZE;
-      canvas.height = CROP_SIZE;
+      canvas.width = cropSize;
+      canvas.height = cropSize;
       const ctx = canvas.getContext('2d');
 
-      const sx = Math.max(0, (img.width - CROP_SIZE) / 2);
-      const sy = Math.max(0, (img.height - CROP_SIZE) / 2);
-      const sw = Math.min(img.width, CROP_SIZE);
-      const sh = Math.min(img.height, CROP_SIZE);
-      const dx = (CROP_SIZE - sw) / 2;
-      const dy = (CROP_SIZE - sh) / 2;
+      const sx = (img.width - cropSize) / 2;
+      const sy = (img.height - cropSize) / 2;
 
-      // Fill black for images smaller than 500px
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, CROP_SIZE, CROP_SIZE);
-      ctx.drawImage(img, sx, sy, sw, sh, dx, dy, sw, sh);
+      ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
 
       const mimeType = getMimeType(file);
       canvas.toBlob(blob => resolve(blob), mimeType, 0.95);

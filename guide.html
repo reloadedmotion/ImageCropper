@@ -204,13 +204,13 @@
 
 <!-- ===================== 概要 ===================== -->
 <h2>1. ツール概要</h2>
-<p>画像の<span class="highlight">中心</span>を基準に<span class="highlight">500 x 500 ピクセル</span>の正方形にトリミングするツールです。<br>
+<p>画像の<span class="highlight">中心</span>を基準に、<span class="highlight">短い辺の長さに合わせた正方形</span>にトリミングするツールです。<br>
 ブラウザだけで動作し、サーバーへのアップロードはありません。すべての処理はお使いのPC内で完結します。</p>
 
 <div class="spec-grid">
   <div class="spec-card">
-    <div class="value">500 x 500</div>
-    <div class="desc">トリミングサイズ (px)</div>
+    <div class="value">短辺基準</div>
+    <div class="desc">正方形トリミング</div>
   </div>
   <div class="spec-card">
     <div class="value">最大 1,000枚</div>
@@ -311,11 +311,32 @@
 <!-- ===================== トリミング仕様 ===================== -->
 <h2>5. トリミング仕様</h2>
 
-<h3>500px以上の画像</h3>
-<p>画像の<span class="highlight">中心</span>を基準に、上下左右を均等に切り取って 500 x 500 px にします。</p>
+<p>元画像のタテ・ヨコのうち<span class="highlight">短い方の辺</span>の長さを一辺とした正方形にトリミングします。<br>
+トリミングの中心は<span class="highlight">元画像の中心</span>です。長い方の辺が均等に切り取られます。</p>
 
-<h3>500px未満の画像</h3>
-<p>画像をそのままのサイズで中央に配置し、余白部分は<span class="highlight">黒色（#000）</span>で塗りつぶされます。</p>
+<div class="example-box">
+  <div class="label">例1</div>
+  元画像 <span class="code">1000 x 500</span>（横長）
+  <span class="arrow">&#8594;</span>
+  出力 <span class="code">500 x 500</span>
+  <p style="margin-top:8px;font-size:13px;color:#888;">短辺が500pxのため、中心から左右を均等に切り取って500x500になります。</p>
+</div>
+
+<div class="example-box">
+  <div class="label">例2</div>
+  元画像 <span class="code">800 x 1200</span>（縦長）
+  <span class="arrow">&#8594;</span>
+  出力 <span class="code">800 x 800</span>
+  <p style="margin-top:8px;font-size:13px;color:#888;">短辺が800pxのため、中心から上下を均等に切り取って800x800になります。</p>
+</div>
+
+<div class="example-box">
+  <div class="label">例3</div>
+  元画像 <span class="code">600 x 600</span>（正方形）
+  <span class="arrow">&#8594;</span>
+  出力 <span class="code">600 x 600</span>
+  <p style="margin-top:8px;font-size:13px;color:#888;">すでに正方形のため、そのまま出力されます。</p>
+</div>
 
 <!-- ===================== ZIP入力 ===================== -->
 <h2>6. ZIPファイルのアップロード</h2>
