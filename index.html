@@ -348,19 +348,31 @@ cropBtn.addEventListener('click', async () => {
 
     const blob = await cropImage(selectedFiles[i]);
     const originalName = selectedFiles[i].name;
-    croppedBlobs.push({ blob, name: originalName });
+    const ext = originalName.split('.').pop();
+    const baseName = originalName.substring(0, originalName.lastIndexOf('.'));
 
-    const url = URL.createObjectURL(blob);
-    const div = document.createElement('div');
-    div.className = 'gallery-item cropped';
-    div.innerHTML = `<img src="${url}"><div class="label">${originalName}</div>`;
-    croppedGallery.appendChild(div);
+    // Extract codes matching 2-3 letters + 4-5 digits (e.g. RE55412, SEV8025)
+    const parts = baseName.split(/[-_]/);
+    const codePattern = /^[A-Za-z]{2,3}\d{4,5}$/;
+    const codes = parts.filter(p => codePattern.test(p));
+    if (codes.length === 0) codes.push(baseName);
+
+    for (const code of codes) {
+      const outputName = code + '.' + ext;
+      croppedBlobs.push({ blob, name: outputName });
+
+      const url = URL.createObjectURL(blob);
+      const div = document.createElement('div');
+      div.className = 'gallery-item cropped';
+      div.innerHTML = `<img src="${url}"><div class="label">${outputName}</div>`;
+      croppedGallery.appendChild(div);
+    }
 
     // Yield to UI
     await new Promise(r => setTimeout(r, 0));
   }
 
-  setStatus(`${total}枚のトリミングが完了しました`);
+  setStatus(`${total}枚の画像から${croppedBlobs.length}枚を出力しました`);
   downloadAllBtn.disabled = false;
   cropBtn.disabled = false;
 });
