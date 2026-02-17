@@ -343,16 +343,18 @@ cropBtn.addEventListener('click', async () => {
 
   const total = selectedFiles.length;
 
+  // Phase 1: Crop all images and collect raw results
+  const rawResults = []; // { blob, canvas, outputName }
+
   for (let i = 0; i < total; i++) {
     setStatus(`トリミング中... ${i + 1} / ${total}`);
-    progressBar.style.width = `${((i + 1) / total) * 100}%`;
+    progressBar.style.width = `${((i + 1) / total) * 50}%`;
 
-    const blob = await cropImage(selectedFiles[i]);
+    const { blob, canvas } = await cropImage(selectedFiles[i]);
     const originalName = selectedFiles[i].name;
     const ext = originalName.split('.').pop();
     const baseName = originalName.substring(0, originalName.lastIndexOf('.'));
 
-    // Extract codes matching 2-3 letters + 4-5 digits (e.g. RE55412, SEV8025)
     const parts = baseName.split(/[-_]/);
     const codePattern = /^[A-Za-z]{2,3}\d{4,5}$/;
     const codes = parts.filter(p => codePattern.test(p));
@@ -360,18 +362,68 @@ cropBtn.addEventListener('click', async () => {
 
     for (const code of codes) {
       const outputName = code + '.' + ext;
-      croppedBlobs.push({ blob, name: outputName });
-
-      const url = URL.createObjectURL(blob);
-      const div = document.createElement('div');
-      div.className = 'gallery-item cropped';
-      div.innerHTML = `<img src="${url}"><div class="label">${outputName}</div>`;
-      croppedGallery.appendChild(div);
+      rawResults.push({ blob, canvas, outputName });
     }
 
-    // Yield to UI
     await new Promise(r => setTimeout(r, 0));
   }
+
+  // Phase 2: Deduplicate and rename
+  setStatus('重複チェック中...');
+  progressBar.style.width = '60%';
+
+  // Group by output name
+  const nameGroups = {};
+  for (const item of rawResults) {
+    if (!nameGroups[item.outputName]) nameGroups[item.outputName] = [];
+    nameGroups[item.outputName].push(item);
+  }
+
+  croppedBlobs = [];
+  for (const [outputName, group] of Object.entries(nameGroups)) {
+    if (group.length === 1) {
+      // No conflict
+      croppedBlobs.push({ blob: group[0].blob, name: outputName });
+    } else {
+      // Multiple items with same name - check if images are the same
+      const unique = [group[0]];
+      for (let j = 1; j < group.length; j++) {
+        let isDuplicate = false;
+        for (const u of unique) {
+          if (areImagesSame(u.canvas, group[j].canvas)) {
+            isDuplicate = true;
+            break;
+          }
+        }
+        if (!isDuplicate) unique.push(group[j]);
+      }
+
+      if (unique.length === 1) {
+        // All same image - keep one
+        croppedBlobs.push({ blob: unique[0].blob, name: outputName });
+      } else {
+        // Different images - add _01, _02, ...
+        const dotIdx = outputName.lastIndexOf('.');
+        const nameBase = outputName.substring(0, dotIdx);
+        const nameExt = outputName.substring(dotIdx);
+        for (let k = 0; k < unique.length; k++) {
+          const numberedName = nameBase + '_' + String(k + 1).padStart(2, '0') + nameExt;
+          croppedBlobs.push({ blob: unique[k].blob, name: numberedName });
+        }
+      }
+    }
+  }
+
+  // Phase 3: Display results
+  progressBar.style.width = '90%';
+  for (const { blob, name } of croppedBlobs) {
+    const url = URL.createObjectURL(blob);
+    const div = document.createElement('div');
+    div.className = 'gallery-item cropped';
+    div.innerHTML = `<img src="${url}"><div class="label">${name}</div>`;
+    croppedGallery.appendChild(div);
+  }
+  progressBar.style.width = '100%';
 
   setStatus(`${total}枚の画像から${croppedBlobs.length}枚を出力しました`);
   downloadAllBtn.disabled = false;
@@ -394,12 +446,32 @@ function cropImage(file) {
       ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
 
       const mimeType = getMimeType(file);
-      canvas.toBlob(blob => resolve(blob), mimeType, 0.95);
+      canvas.toBlob(blob => resolve({ blob, canvas }), mimeType, 0.95);
       URL.revokeObjectURL(img.src);
     };
     img.onerror = () => reject(new Error(`Failed to load: ${file.name}`));
     img.src = URL.createObjectURL(file);
   });
+}
+
+// Compare two canvases by sampling pixels (fast approximate comparison)
+function areImagesSame(canvas1, canvas2) {
+  if (canvas1.width !== canvas2.width || canvas1.height !== canvas2.height) return false;
+  const size = 64; // Compare at 64x64 thumbnail for speed
+  const tmp1 = document.createElement('canvas');
+  const tmp2 = document.createElement('canvas');
+  tmp1.width = tmp2.width = size;
+  tmp1.height = tmp2.height = size;
+  tmp1.getContext('2d').drawImage(canvas1, 0, 0, size, size);
+  tmp2.getContext('2d').drawImage(canvas2, 0, 0, size, size);
+  const d1 = tmp1.getContext('2d').getImageData(0, 0, size, size).data;
+  const d2 = tmp2.getContext('2d').getImageData(0, 0, size, size).data;
+  let diff = 0;
+  for (let i = 0; i < d1.length; i += 4) {
+    diff += Math.abs(d1[i] - d2[i]) + Math.abs(d1[i+1] - d2[i+1]) + Math.abs(d1[i+2] - d2[i+2]);
+  }
+  const maxDiff = size * size * 3 * 255;
+  return (diff / maxDiff) < 0.02; // Less than 2% difference = same image
 }
 
 function getExtension(file) {

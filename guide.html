@@ -308,8 +308,38 @@
   <tr><td><span class="code">20230615Q01</span></td><td>桁数超過</td><td style="color:#e74c3c;">&#10007; 認識されない</td></tr>
 </table>
 
+<!-- ===================== 同名ファイルの処理 ===================== -->
+<h2>5. 同名ファイルの自動処理</h2>
+
+<p>コード抽出の結果、<span class="highlight">同じファイル名</span>が複数生成される場合があります。<br>
+その場合、ツールが<span class="highlight">画像の見た目を自動比較</span>して処理を分けます。</p>
+
+<table>
+  <tr><th>状況</th><th>処理</th></tr>
+  <tr><td>同名 ＆ 見た目が<span style="color:#2ecc71;font-weight:600;">同じ</span></td><td>重複とみなし<strong>1枚だけ</strong>出力（自動除去）</td></tr>
+  <tr><td>同名 ＆ 見た目が<span style="color:#e74c3c;font-weight:600;">異なる</span></td><td>連番を付けて<strong>全て</strong>出力（<span class="code">_01</span>, <span class="code">_02</span> ...）</td></tr>
+</table>
+
+<div class="example-box">
+  <div class="label">例：見た目が異なる同名ファイル</div>
+  <span class="code">P006_01_WRA9007_WRA9064_WRW9315.jpg</span> → WRA9064 を抽出<br>
+  <span class="code">P019_01_WRA9064.jpg</span> → WRA9064 を抽出<br>
+  <br>
+  両方とも <span class="code">WRA9064.jpg</span> になるが、画像が異なるため：<br>
+  <span class="output-file">WRA9064_01.jpg</span>
+  <span class="output-file">WRA9064_02.jpg</span>
+  <p style="margin-top:8px;font-size:13px;color:#888;">異なる画像には _01, _02 ... の連番が全てに付与されます。</p>
+</div>
+
+<div class="example-box">
+  <div class="label">例：見た目が同じ同名ファイル</div>
+  同じ商品画像が複数ファイルから <span class="code">WRA9064.jpg</span> として生成された場合：<br>
+  <span class="output-file">WRA9064.jpg</span>
+  <p style="margin-top:8px;font-size:13px;color:#888;">同じ画像は重複除去され、1枚だけ出力されます。</p>
+</div>
+
 <!-- ===================== トリミング仕様 ===================== -->
-<h2>5. トリミング仕様</h2>
+<h2>6. トリミング仕様</h2>
 
 <p>元画像のタテ・ヨコのうち<span class="highlight">短い方の辺</span>の長さを一辺とした正方形にトリミングします。<br>
 トリミングの中心は<span class="highlight">元画像の中心</span>です。長い方の辺が均等に切り取られます。</p>
@@ -339,7 +369,7 @@
 </div>
 
 <!-- ===================== ZIP入力 ===================== -->
-<h2>6. ZIPファイルのアップロード</h2>
+<h2>7. ZIPファイルのアップロード</h2>
 <p>画像をZIPにまとめてアップロードすることもできます。</p>
 <ul style="margin:12px 0 12px 24px;color:#bbb;">
   <li>ZIP内のフォルダ構造に関係なく、画像を自動検出します</li>
@@ -349,7 +379,7 @@
 </ul>
 
 <!-- ===================== 注意事項 ===================== -->
-<h2>7. 注意事項</h2>
+<h2>8. 注意事項</h2>
 <ul style="margin:12px 0 12px 24px;color:#bbb;">
   <li>すべての処理はブラウザ内で完結します。画像がサーバーに送信されることはありません</li>
   <li>大量の画像を処理する場合、PCのメモリ使用量が増加します</li>
