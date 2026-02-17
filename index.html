@@ -402,12 +402,13 @@ cropBtn.addEventListener('click', async () => {
         // All same image - keep one
         croppedBlobs.push({ blob: unique[0].blob, name: outputName });
       } else {
-        // Different images - add _01, _02, ...
+        // Different images - 1st keeps original name, 2nd+ get _01, _02, ...
         const dotIdx = outputName.lastIndexOf('.');
         const nameBase = outputName.substring(0, dotIdx);
         const nameExt = outputName.substring(dotIdx);
-        for (let k = 0; k < unique.length; k++) {
-          const numberedName = nameBase + '_' + String(k + 1).padStart(2, '0') + nameExt;
+        croppedBlobs.push({ blob: unique[0].blob, name: outputName });
+        for (let k = 1; k < unique.length; k++) {
+          const numberedName = nameBase + '_' + String(k).padStart(2, '0') + nameExt;
           croppedBlobs.push({ blob: unique[k].blob, name: numberedName });
         }
       }
